@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Pocket8</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      // 1. Prevent Interaction Interference (Global)
+      window.oncontextmenu = (e) => e.preventDefault();
+      try {
+        document.body.style.webkitUserSelect = "none";
+      } catch (e) {}
+
+      // Optional: Log when PICO-8 might be loaded (for debugging)
+      console.log("🚀 Index: Waiting for PICO-8 to be injected by App...");
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

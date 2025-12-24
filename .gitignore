@@ -1,0 +1,21 @@
+# Node
+node_modules/
+dist/
+.env
+npm-debug.log
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Capacitor / iOS
+ios/App/App/public/
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+*.xcworkspace/xcuserdata
+**/*.xcresult
