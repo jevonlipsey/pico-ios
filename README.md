@@ -4,14 +4,23 @@ A native PICO-8 emulator for iOS that bridges the gap between web flexibility an
 
 [Download the latest build.](https://github.com/jevonlipsey/pico-ios/releases/latest)
 
-![Demo](assets/demo.gif)
+https://github.com/user-attachments/assets/ec24f92e-d29a-4319-8293-439487d60b35
 
 ## Features
 
 - **Native Persistence**: Implements a custom "Handoff & Sync" protocol ensuring 100% save-state integrity across app restarts.
 - **Quick Save & Load**: The **only** PICO-8 experience with instant save states. Freeze time and resume anywhere, across devices.
+
+<p align="center">
+  <img src="assets/quickload.gif" width="20%" alt="libscroll" />
+</p>
+
 - **Adaptive Controls**: Custom Gameboy-esque controls with beautiful haptics. Emulator works in portrait and landscape modes.
 - **Smart Library**: Automatically extracts cartridge labels and metadata, presenting your collection in a polished grid.
+
+<p align="center">
+  <img src="assets/libscroll-new.gif" width="20%" alt="libscroll" />
+</p>
 
 ## Under the Hood: A Rant
 
