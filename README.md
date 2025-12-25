@@ -2,6 +2,8 @@
 
 A native PICO-8 emulator for iOS that bridges the gap between web flexibility and native filesystem access!
 
+[Download the latest build.](https://github.com/jevonlipsey/pico-ios/releases/tag/v1.0)
+
 ![Demo](assets/demo.gif)
 
 ## Features
@@ -33,7 +35,7 @@ It’s _not_ a browser wrapper; it’s a custom runtime environment built for na
 
 - sideloading via AltStore, SideStore, or Sideloadly
 
-1. Download the `Pocket8.ipa` from [Releases](link).
+1. Download the `Pocket8.ipa` from [Releases](https://github.com/jevonlipsey/pico-ios/releases/tag/v1.0).
 2. Sideload via **AltStore**, **SideStore**, or **Sideloadly**.
 3. Enable **Developer Mode** in iOS Settings to authorize, and trust yourself in Settings > General > Device Management > Your Name.
 
