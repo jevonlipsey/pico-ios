@@ -42,18 +42,28 @@ It’s _not_ a browser wrapper; it’s a custom runtime environment built for na
 
 ## Installation
 
-- sideloading via AltStore, SideStore, or Sideloadly
+You can sideload Pocket8 via AltStore, SideStore, or Sideloadly.
 
-1. Download the `Pocket8.ipa` from [Releases](https://github.com/jevonlipsey/pico-ios/releases/tag/v1.0).
+### Auto-Update Source (Recommended)
+Add the official source to **SideStore** or **AltStore** to get updates automatically (no computer needed!).
+
+1. Copy this URL: `https://raw.githubusercontent.com/jevonlipsey/pico-ios/main/altstore.json`
+2. Open SideStore/AltStore -> **Sources** -> **+** -> **Add Source**.
+
+<p align="center">
+  <img src="https://i.imgur.com/IEgMrg6.gif" width="20%" alt="Auto-Update Guide" />
+</p>
+
+### Manual Install
+1. Download the `Pocket8.ipa` from [Releases](https://github.com/jevonlipsey/pico-ios/releases/latest).
 2. Sideload via **AltStore**, **SideStore**, or **Sideloadly**.
-3. Enable **Developer Mode** in iOS Settings to authorize, and trust yourself in Settings > General > Device Management > Your Name.
+3. Enable **Developer Mode** in iOS Settings (Settings > General > Device Management > Your Name).
 
 ## Project Status
 
-This is a standalone engineering feat designed to push the limits of WebAssembly-to-Native bridging. While an App Store release is a future possibility, the current priority is maintaining an uncompromised, open-source experience for the PICO-8 community.
+This is a solo dev project designed to push the limits of WebAssembly-to-Native bridging. While an App Store release is a future possibility that I'm gunning for, the current priority is maintaining an uncompromised, open-source experience for the PICO-8 community.
 
-- opens xcode, click the play button to build and run
-
+### build from source
 ```bash
 npm install && npx cap sync && npx cap open ios
 ```
@@ -73,6 +83,6 @@ Pocket8 uses standard PICO-8 cartridges (`.p8` or `.p8.png`).
 
 ## Acknowledgements
 
-- **[Zep (Lexaloffle)](https://www.lexaloffle.com/pico-8.php)**: For creating the fantasy console and being awesome in general.PICO-8 is a masterpiece of design constraints, I'm so excited to bring it to iOS!
+- **[Zep (Lexaloffle)](https://www.lexaloffle.com/pico-8.php)**: For creating the fantasy console and being awesome in general. PICO-8 is a masterpiece of design constraints, I'm so excited to bring it to iOS!
 
 - **You**: For actually reading the documentation. thanks for the support (:
