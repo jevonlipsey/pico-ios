@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isOpen"
-    class="fixed inset-0 z-50 flex justify-end pointer-events-none"
+    class="fixed inset-0 z-[80] flex justify-end pointer-events-none"
   >
     <!-- drawer container -->
     <div

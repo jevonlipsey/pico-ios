@@ -591,9 +591,10 @@ async function startDeleteMode() {
 
 async function handleDelete(game, event) {
   event.stopPropagation();
-  Haptics.notification({ type: "warning" }).catch(() => {});
+
   if (confirm(`Delete ${game.name}? This cannot be undone.`)) {
     await removeCartridge(game.name);
+    Haptics.notification({ type: "success" }).catch(() => {});
   }
 }
 

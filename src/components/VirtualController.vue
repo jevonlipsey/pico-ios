@@ -1,12 +1,13 @@
 <template>
   <div
     class="relative w-full h-full flex justify-between items-center pointer-events-none select-none px-6 pb-6 landscape:grid landscape:grid-cols-[240px_1fr_240px] landscape:p-0 landscape:items-stretch"
+    style="-webkit-user-select: none; user-select: none"
   >
     <!-- d-pad container left -->
     <!-- # landscape: center left -->
     <div
       class="relative w-40 h-40 small:w-36 small:h-36 ml-2 pointer-events-auto active:scale-95 transition-transform duration-100 ease-out landscape:ml-0 landscape:self-center landscape:justify-self-center touch-action-none landscape:col-start-1"
-      style="-webkit-tap-highlight-color: transparent"
+      style="-webkit-tap-highlight-color: transparent; touch-action: none"
       @touchstart.prevent="handleDpadInput"
       @touchmove.prevent="handleDpadInput"
       @touchend.prevent="handleDpadEnd"
@@ -237,34 +238,58 @@ import { picoBridge } from "../services/PicoBridge";
 import { ref } from "vue";
 
 const currentDirection = ref(null);
+
+// # optimization: touch tracking & layout caching
+const dpadTouchId = ref(null);
+const dpadCenter = { x: 0, y: 0 };
 let isMouseDown = false;
 
 const handleDpadInput = (e) => {
-  // handle mouse vs touch
   let clientX, clientY;
 
   if (e.type.startsWith("touch")) {
-    clientX = e.touches[0].clientX;
-    clientY = e.touches[0].clientY;
+    if (e.type === "touchstart") {
+      // # track this specific finger
+      const touch = e.changedTouches[0];
+      dpadTouchId.value = touch.identifier;
+
+      // # cache cache cache!
+      const rect = e.currentTarget.getBoundingClientRect();
+      dpadCenter.x = rect.left + rect.width / 2;
+      dpadCenter.y = rect.top + rect.height / 2;
+
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    } else {
+      // # only follow our tracked finger
+      if (dpadTouchId.value === null) return;
+      const touch = Array.from(e.touches).find(
+        (t) => t.identifier === dpadTouchId.value
+      );
+      if (!touch) return;
+
+      clientX = touch.clientX;
+      clientY = touch.clientY;
+    }
   } else {
-    // mouse
-    if (e.type === "mousedown") isMouseDown = true;
+    // # mouse fallback
+    if (e.type === "mousedown") {
+      isMouseDown = true;
+      const rect = e.currentTarget.getBoundingClientRect();
+      dpadCenter.x = rect.left + rect.width / 2;
+      dpadCenter.y = rect.top + rect.height / 2;
+    }
     if (e.type === "mousemove" && !isMouseDown) return;
     clientX = e.clientX;
     clientY = e.clientY;
   }
 
-  const target = e.currentTarget;
-  const rect = target.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-
-  // calculate angle
-  const deltaX = clientX - centerX;
-  const deltaY = clientY - centerY;
+  // # calc angle from cached center
+  const deltaX = clientX - dpadCenter.x;
+  const deltaY = clientY - dpadCenter.y;
   const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
 
-  // map to direction (cones)
+  // # map to direction (cones)
   let newDirection = null;
 
   // right: -45 to 45
@@ -283,8 +308,18 @@ const handleDpadInput = (e) => {
   }
 };
 
-const handleDpadEnd = () => {
-  isMouseDown = false;
+const handleDpadEnd = (e) => {
+  // # only release if tracked finger lifts
+  if (e.type.startsWith("touch")) {
+    const found = Array.from(e.changedTouches).find(
+      (t) => t.identifier === dpadTouchId.value
+    );
+    if (!found) return;
+    dpadTouchId.value = null;
+  } else {
+    isMouseDown = false;
+  }
+
   if (currentDirection.value) {
     releaseKey(currentDirection.value);
     currentDirection.value = null;
@@ -318,8 +353,6 @@ const pressKey = async (code) => {
   });
 
   window.dispatchEvent(event);
-  document.dispatchEvent(event); // fallback
-
   // # legacy bitmask support
   updateBitmask(code, true);
 

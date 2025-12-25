@@ -13,7 +13,8 @@
         class="relative flex items-center justify-center p-1 w-full h-full pointer-events-auto"
       >
         <canvas
-          class="aspect-square w-full h-full object-contain image-pixelated shadow-2xl shadow-black/50 rounded-sm"
+          class="aspect-square w-full h-full object-contain image-pixelated rounded-sm transition-shadow duration-300"
+          :class="{ 'shadow-2xl shadow-black/50': isMenuOpen }"
           id="canvas"
           oncontextmenu="event.preventDefault()"
           tabindex="-1"
@@ -39,7 +40,7 @@
         <!-- pause menu overlay -->
         <div
           v-if="isMenuOpen"
-          class="absolute inset-0 bg-black/60 backdrop-blur-xl z-30 flex items-center justify-center"
+          class="absolute inset-0 bg-black/60 backdrop-blur-xl z-[60] flex items-center justify-center"
         >
           <!-- menu content -->
           <div
@@ -57,6 +58,7 @@
               :key="btn.label"
               :id="'btn-' + idx"
               @click="triggerMenuAction(btn.action)"
+              @touchend.prevent="triggerMenuAction(btn.action)"
               class="px-8 py-3 rounded-xl font-medium tracking-wider transition-colors w-full backdrop-blur-md focus:ring-4 focus:ring-white/50 outline-none font-pico uppercase"
               :class="[
                 focusIndex === idx
@@ -127,6 +129,7 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { useRouter, useRoute } from "vue-router";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { picoBridge } from "../services/PicoBridge";
@@ -284,6 +287,7 @@ const toggleMenu = () => {
 };
 
 const triggerMenuAction = (action) => {
+  console.log("⚡️ [Player] Menu Action Triggered:", action);
   Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
   if (action === "resume") toggleMenu();
   if (action === "quicksave") triggerQuickSave();
@@ -427,6 +431,7 @@ const showToast = (msg) => {
 // # keyboard navigation
 function handleGlobalKeydown(e) {
   if (e.key === "Escape") {
+    console.log("[Player] Input: Escape");
     toggleMenu();
     return;
   }
@@ -434,12 +439,22 @@ function handleGlobalKeydown(e) {
   if (!isMenuOpen.value) return;
   if (isSavesDrawerOpen.value) return;
 
+  console.log("[Player] Menu Input:", e.key);
+
   if (e.key === "ArrowUp") {
     focusIndex.value =
       (focusIndex.value - 1 + menuButtons.length) % menuButtons.length;
   } else if (e.key === "ArrowDown") {
     focusIndex.value = (focusIndex.value + 1) % menuButtons.length;
-  } else if (e.key === "Enter" || e.key === " ") {
+  } else if (
+    e.key === "Enter" ||
+    e.key === " " ||
+    e.key === "z" ||
+    e.key === "x" ||
+    e.key === "Z" ||
+    e.key === "X"
+  ) {
+    console.log("[Player] Triggering Action from Key:", e.key);
     triggerMenuAction(menuButtons[focusIndex.value].action);
   }
 }

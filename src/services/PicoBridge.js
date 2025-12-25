@@ -383,25 +383,43 @@ class Pico8Bridge {
       }
 
       const files = fs.readdir(savesDir);
-      console.log(`[Native] scanning /appdata... found ${files.length} items`);
+      // console.log(`[Native] scanning /appdata... found ${files.length} items`);
 
-      for (const file of files) {
-        if (file === "." || file === "..") continue;
+      // # optimization: process non-blocking
+      const processFile = async (file) => {
+        if (file === "." || file === "..") return;
 
-        const path = `${savesDir}/${file}`;
-        const data = fs.readFile(path);
-        const base64 =
-          typeof data === "string"
-            ? btoa(data)
-            : btoa(String.fromCharCode.apply(null, data));
+        return new Promise((resolve) => {
+          // # schedule on idle or minimal timeout
+          const scheduler = window.requestIdleCallback || setTimeout;
+          scheduler(async () => {
+            try {
+              const path = `${savesDir}/${file}`;
+              const data = fs.readFile(path);
+              const base64 =
+                typeof data === "string"
+                  ? btoa(data)
+                  : btoa(String.fromCharCode.apply(null, data));
 
-        await Filesystem.writeFile({
-          path: `Saves/${file}`,
-          data: base64,
-          directory: Directory.Documents,
-          encoding: "base64",
-          recursive: true,
+              await Filesystem.writeFile({
+                path: `Saves/${file}`,
+                data: base64,
+                directory: Directory.Documents,
+                encoding: "base64",
+                recursive: true,
+              });
+              resolve();
+            } catch (e) {
+              console.warn(`failed to sync ${file}`, e);
+              resolve(); // proceed anyway
+            }
+          });
         });
+      };
+
+      // # serial execution to prevent memory spiking
+      for (const file of files) {
+        await processFile(file);
       }
     } catch (e) {
       console.warn("syncToNative failed", e);
