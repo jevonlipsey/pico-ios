@@ -48,3 +48,22 @@ This is a standalone engineering feat designed to push the limits of WebAssembly
 ```bash
 npm install && npx cap sync && npx cap open ios
 ```
+
+## How to Get Games
+
+Pocket8 uses standard PICO-8 cartridges (`.p8` or `.p8.png`).
+
+1.  **Visit the BBS**: Go to [lexaloffle.com/bbs](https://www.lexaloffle.com/bbs/) or [itch.io](https://itch.io/games/tag-pico-8).
+2.  **Look for the Cart**: You need the **cartridge file**, not a zip or exe. Look for the little square image that looks like the game cover.
+3.  **Save It**:
+    - **Desktop**: Right-click the small "Cart" icon -> "Save Image As".
+    - **iOS**: Tap and hold the cart image -> "Save to Files".
+4.  **Import**: In Pocket8, tap the `+` icon and select your saved `.p8.png` file.
+
+**Pro Tip:** If you see a file named `thumb.png` or `cover.png ...`, that's usually just a picture. You specifically need the file that often ends in `.p8.png` and looks like a game cartridge.
+
+## Acknowledgements
+
+- **[Zep (Lexaloffle)](https://www.lexaloffle.com/pico-8.php)**: For creating the fantasy console and being awesome in general.PICO-8 is a masterpiece of design constraints, I'm so excited to bring it to iOS!
+
+- **You**: For actually reading the documentation. thanks for the support (:

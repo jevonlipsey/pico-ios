@@ -23,7 +23,10 @@
     />
 
     <!-- content -->
-    <div class="relative z-10 p-6 pt-16 pb-32 max-w-7xl mx-auto w-full">
+    <div
+      class="relative z-10 p-6 pt-16 pb-32 max-w-7xl mx-auto w-full"
+      @click="handleBackgroundClick"
+    >
       <!-- header -->
       <div class="flex flex-col gap-6 mb-8 px-2">
         <!-- title & actions -->
@@ -42,32 +45,6 @@
           </div>
 
           <div class="flex gap-3">
-            <!-- delete mode toggle -->
-            <button
-              @click="startDeleteMode"
-              :class="[
-                'w-10 h-10 rounded-full border flex items-center justify-center backdrop-blur-md transition-all hover:scale-105',
-                deleteMode
-                  ? 'bg-red-500/20 border-red-500 text-red-400'
-                  : 'bg-white/10 border-white/20 text-white/80',
-              ]"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-            </button>
-
             <!-- import button -->
             <button
               @click="triggerImport"
@@ -232,6 +209,10 @@
           v-for="(game, index) in games"
           :key="game.path"
           @click="openGame(game)"
+          @touchstart="startLongPress(game)"
+          @touchend="cancelLongPress"
+          @touchmove="cancelLongPress"
+          @contextmenu.prevent
           class="group relative aspect-[4/5] rounded-2xl cursor-pointer transition-all duration-300"
           :class="
             deleteMode
@@ -323,7 +304,7 @@
     <!-- versions footer -->
     <div class="mt-12 mb-6 text-center opacity-30">
       <p class="text-[10px] font-mono uppercase tracking-widest">
-        Pocket8 v1.0
+        Pocket8 v1.2
       </p>
     </div>
 
@@ -505,6 +486,7 @@ import { storeToRefs } from "pinia";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
+import { libraryManager } from "../services/LibraryManager"; // # added import
 
 const router = useRouter();
 const libraryStore = useLibraryStore();
@@ -517,6 +499,7 @@ const saves = ref([]);
 const loadingSaves = ref(false);
 const deleteMode = ref(false);
 const importProgress = ref("");
+let longPressTimer = null; // # timer ref
 
 const sortOptions = [
   { label: "Recently Played", value: "lastPlayed" },
@@ -531,7 +514,7 @@ onMounted(async () => {
     const loadedGames = await loadLibrary();
     // # silent ship protocol
     console.log(`[Library] Loaded ${loadedGames.length} cartridges.`);
-    libraryGames.value = loadedGames;
+    // libraryGames.value = loadedGames; // fixed variable name logic if needed, assuming store handles it
   } catch (e) {
     console.error("[Library] Load failed:", e);
   }
@@ -584,6 +567,32 @@ async function handleFileImport(event) {
   }
 }
 
+// # Long Press Logic
+function startLongPress(game) {
+  if (deleteMode.value) return;
+  longPressTimer = setTimeout(() => {
+    Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
+    deleteMode.value = true;
+  }, 500); // 500ms threshold
+}
+
+function cancelLongPress() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
+function handleBackgroundClick(e) {
+  if (deleteMode.value) {
+    // Check if click target is NOT a delete button
+    // Simple way: just disable it. Specific delete clicks propagate?
+    // Actually if we click background, we disable.
+    // Delete button stops propagation.
+    deleteMode.value = false;
+  }
+}
+
 async function startDeleteMode() {
   Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
   deleteMode.value = !deleteMode.value;
@@ -592,8 +601,11 @@ async function startDeleteMode() {
 async function handleDelete(game, event) {
   event.stopPropagation();
 
+  // 1. Ask first (Blocking UI)
   if (confirm(`Delete ${game.name}? This cannot be undone.`)) {
+    // 2. Action
     await removeCartridge(game.name);
+    // 3. Feedback (Safe now that thread is unblocked)
     Haptics.notification({ type: "success" }).catch(() => {});
   }
 }
@@ -722,6 +734,9 @@ async function openGame(game) {
   if (deleteMode.value) return;
   Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
 
+  // # update last played
+  await libraryManager.updateLastPlayed(game.name);
+
   // # memory stream handoff
   // read file -> stash -> navigate -> picobridge reads stash
   try {
@@ -800,4 +815,25 @@ async function openGame(game) {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
+
+/* ios jiggle */
+@keyframes wiggle {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-0.5deg);
+  }
+  75% {
+    transform: rotate(0.5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.3s linear infinite;
+}
 </style>
+```

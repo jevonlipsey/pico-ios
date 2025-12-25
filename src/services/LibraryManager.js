@@ -180,6 +180,16 @@ export class LibraryManager {
     }
   }
 
+  async updateLastPlayed(cartName) {
+    if (!this.metadata[cartName]) {
+      this.metadata[cartName] = { playCount: 0, lastPlayed: 0 };
+    }
+    this.metadata[cartName].lastPlayed = Date.now();
+    this.metadata[cartName].playCount =
+      (this.metadata[cartName].playCount || 0) + 1;
+    await this.saveMetadata();
+  }
+
   async deleteCartridge(filename) {
     try {
       // 1. delete cartridge

@@ -1,13 +1,21 @@
 <template>
   <div
     class="relative w-full h-full flex justify-between items-center pointer-events-none select-none px-6 pb-6 landscape:grid landscape:grid-cols-[240px_1fr_240px] landscape:p-0 landscape:items-stretch"
-    style="-webkit-user-select: none; user-select: none"
+    style="
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    "
   >
     <!-- d-pad container left -->
     <!-- # landscape: center left -->
     <div
       class="relative w-40 h-40 small:w-36 small:h-36 ml-2 pointer-events-auto active:scale-95 transition-transform duration-100 ease-out landscape:ml-0 landscape:self-center landscape:justify-self-center touch-action-none landscape:col-start-1"
-      style="-webkit-tap-highlight-color: transparent; touch-action: none"
+      style="
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+        -webkit-user-select: none;
+      "
       @touchstart.prevent="handleDpadInput"
       @touchmove.prevent="handleDpadInput"
       @touchend.prevent="handleDpadEnd"
@@ -41,25 +49,25 @@
           <path
             d="M36 34 V12 A4 4 0 0 1 64 12 V34 H36"
             fill="url(#glass-gradient)"
-            :class="{ 'fill-white/30': currentDirection === 38 }"
+            :class="{ 'fill-white/30': activeKeys.has(38) }"
             class="transition-colors duration-150"
           />
           <path
             d="M36 66 V88 A4 4 0 0 0 64 88 V66 H36"
             fill="url(#glass-gradient)"
-            :class="{ 'fill-white/30': currentDirection === 40 }"
+            :class="{ 'fill-white/30': activeKeys.has(40) }"
             class="transition-colors duration-150"
           />
           <path
             d="M34 36 H12 A4 4 0 0 0 12 64 H34 V36"
             fill="url(#glass-gradient)"
-            :class="{ 'fill-white/30': currentDirection === 37 }"
+            :class="{ 'fill-white/30': activeKeys.has(37) }"
             class="transition-colors duration-150"
           />
           <path
             d="M66 36 H88 A4 4 0 0 1 88 64 H66 V36"
             fill="url(#glass-gradient)"
-            :class="{ 'fill-white/30': currentDirection === 39 }"
+            :class="{ 'fill-white/30': activeKeys.has(39) }"
             class="transition-colors duration-150"
           />
           <rect
@@ -235,113 +243,172 @@
 <script setup>
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { picoBridge } from "../services/PicoBridge";
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 
-const currentDirection = ref(null);
+// # active keys tracking
+const activeKeys = reactive(new Set());
 
 // # optimization: touch tracking & layout caching
-const dpadTouchId = ref(null);
+let dpadTouchId = null;
 const dpadCenter = { x: 0, y: 0 };
 let isMouseDown = false;
+let audioResumed = false;
+
+const emit = defineEmits(["menu"]);
+
+const cacheDpadMetrics = (e) => {
+  const el = e.currentTarget;
+  const rect = el.getBoundingClientRect();
+  dpadCenter.x = rect.left + rect.width / 2;
+  dpadCenter.y = rect.top + rect.height / 2;
+};
 
 const handleDpadInput = (e) => {
+  if (!dpadCenter.x) cacheDpadMetrics(e);
+
   let clientX, clientY;
-
-  if (e.type.startsWith("touch")) {
-    if (e.type === "touchstart") {
-      // # track this specific finger
-      const touch = e.changedTouches[0];
-      dpadTouchId.value = touch.identifier;
-
-      // # cache cache cache!
-      const rect = e.currentTarget.getBoundingClientRect();
-      dpadCenter.x = rect.left + rect.width / 2;
-      dpadCenter.y = rect.top + rect.height / 2;
-
+  // # strict id matching
+  if (e.type === "touchmove" || e.type === "touchstart") {
+    const touch = Array.from(e.changedTouches).find(
+      (t) => t.identifier === dpadTouchId
+    );
+    if (!touch && e.type === "touchstart") {
+      // # capture new id
+      const t = e.changedTouches[0];
+      dpadTouchId = t.identifier;
+      clientX = t.clientX;
+      clientY = t.clientY;
+      // recache on new touch start in case layout shifted
+      cacheDpadMetrics(e);
+    } else if (touch) {
       clientX = touch.clientX;
       clientY = touch.clientY;
     } else {
-      // # only follow our tracked finger
-      if (dpadTouchId.value === null) return;
-      const touch = Array.from(e.touches).find(
-        (t) => t.identifier === dpadTouchId.value
-      );
-      if (!touch) return;
-
-      clientX = touch.clientX;
-      clientY = touch.clientY;
+      return; // ignore rogue touches
     }
   } else {
     // # mouse fallback
     if (e.type === "mousedown") {
       isMouseDown = true;
-      const rect = e.currentTarget.getBoundingClientRect();
-      dpadCenter.x = rect.left + rect.width / 2;
-      dpadCenter.y = rect.top + rect.height / 2;
+      cacheDpadMetrics(e);
     }
     if (e.type === "mousemove" && !isMouseDown) return;
     clientX = e.clientX;
     clientY = e.clientY;
   }
 
-  // # calc angle from cached center
-  const deltaX = clientX - dpadCenter.x;
-  const deltaY = clientY - dpadCenter.y;
-  const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+  const dx = clientX - dpadCenter.x;
+  const dy = clientY - dpadCenter.y;
 
-  // # map to direction (cones)
-  let newDirection = null;
+  // ## hysteresis patch
+  const ENGAGE = 20;
+  const RELEASE = 8;
+  const newKeys = [];
 
-  // right: -45 to 45
-  if (angle > -45 && angle <= 45) newDirection = 39;
-  // down: 45 to 135
-  else if (angle > 45 && angle <= 135) newDirection = 40;
-  // up: -135 to -45
-  else if (angle > -135 && angle <= -45) newDirection = 38;
-  // left: 135 to 180 or -180 to -135
-  else newDirection = 37;
+  // helper to check axis state
+  const checkAxis = (value, positiveKey, negativeKey) => {
+    // check positive direction
+    if (activeKeys.has(positiveKey)) {
+      // keep active if > release
+      if (value > RELEASE) newKeys.push(positiveKey);
+    } else {
+      if (value > ENGAGE) newKeys.push(positiveKey);
+    }
 
-  if (newDirection !== currentDirection.value) {
-    if (currentDirection.value) releaseKey(currentDirection.value);
-    if (newDirection) pressKey(newDirection);
-    currentDirection.value = newDirection;
+    // check negative direction
+    if (activeKeys.has(negativeKey)) {
+      // keep active if < -release
+      if (value < -RELEASE) newKeys.push(negativeKey);
+    } else {
+      // become active if < -engage
+      if (value < -ENGAGE) newKeys.push(negativeKey);
+    }
+  };
+
+  // horizontal x
+  checkAxis(dx, 39, 37);
+
+  // vertical y
+  checkAxis(dy, 40, 38);
+
+  // # dispatch changes
+  triggerKeys(newKeys);
+};
+
+const triggerKeys = (keyCodes) => {
+  // 1. identify keys to release (was active, now not)
+  for (const k of activeKeys) {
+    if (!keyCodes.includes(k)) {
+      sendKey(k, "keyup");
+      activeKeys.delete(k);
+    }
   }
+
+  // 2. identify keys to press (not active, now is)
+  for (const k of keyCodes) {
+    if (!activeKeys.has(k)) {
+      sendKey(k, "keydown");
+      activeKeys.add(k);
+      // haptic only on fresh press
+      Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    }
+  }
+};
+
+const sendKey = (keyCode, type) => {
+  // # audio resume trigger
+  if (!audioResumed && type === "keydown") {
+    picoBridge.resumeAudio();
+    audioResumed = true;
+  }
+
+  const map = {
+    37: "ArrowLeft",
+    38: "ArrowUp",
+    39: "ArrowRight",
+    40: "ArrowDown",
+  };
+  const key = map[keyCode];
+  const event = new KeyboardEvent(type, {
+    key: key,
+    code: key,
+    keyCode: keyCode,
+    which: keyCode,
+    bubbles: true,
+  });
+
+  window.dispatchEvent(event);
+
+  // # legacy bitmask
+  if (type === "keydown") updateBitmask(keyCode, true);
+  else updateBitmask(keyCode, false);
 };
 
 const handleDpadEnd = (e) => {
-  // # only release if tracked finger lifts
-  if (e.type.startsWith("touch")) {
-    const found = Array.from(e.changedTouches).find(
-      (t) => t.identifier === dpadTouchId.value
+  // if its a specific touch end, ensure it matches our tracked ID
+  if (e && e.changedTouches) {
+    const touch = Array.from(e.changedTouches).find(
+      (t) => t.identifier === dpadTouchId
     );
-    if (!found) return;
-    dpadTouchId.value = null;
-  } else {
-    isMouseDown = false;
+    if (!touch) return; // released a different finger
   }
 
-  if (currentDirection.value) {
-    releaseKey(currentDirection.value);
-    currentDirection.value = null;
+  dpadTouchId = null;
+  isMouseDown = false;
+
+  // release all active keys
+  for (const k of activeKeys) {
+    sendKey(k, "keyup");
   }
+  activeKeys.clear();
 };
 
-// # keycodes:
-// left: 37, right: 39, up: 38, down: 40
-// z (o): 90, x (x): 88
-// enter (pause): 13
-// escape (select): 27
-
-let audioResumed = false;
-
 const pressKey = async (code) => {
-  // # audio resume trigger
   if (!audioResumed) {
     picoBridge.resumeAudio();
     audioResumed = true;
   }
 
-  // dispatch 'keydown' to window, document, and canvas
   const event = new KeyboardEvent("keydown", {
     key: getKeyName(code),
     code: getCodeName(code),
@@ -353,7 +420,6 @@ const pressKey = async (code) => {
   });
 
   window.dispatchEvent(event);
-  // # legacy bitmask support
   updateBitmask(code, true);
 
   try {
@@ -373,12 +439,8 @@ const releaseKey = (code) => {
   });
 
   window.dispatchEvent(event);
-  document.dispatchEvent(event);
-
   updateBitmask(code, false);
 };
-
-const emit = defineEmits(["menu"]);
 
 // # event helpers
 function getKeyName(code) {
