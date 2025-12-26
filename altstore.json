@@ -15,7 +15,12 @@
       "iconURL": "https://raw.githubusercontent.com/jevonlipsey/pico-ios/main/ios/App/App/Assets.xcassets/AppIcon.appiconset/1024.png",
       "tintColor": "#8e2de2",
       "size": 14225560,
-      "screenshotURLs": []
+      "screenshotURLs": [],
+      "appPermissions": {
+        "backgroundAudio": false,
+        "backgroundFetch": false,
+        "photos": false
+      }
     }
   ]
 }
