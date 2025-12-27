@@ -10,7 +10,7 @@
       "version": "1.4.2",
       "versionDate": "2025-12-27",
       "versionDescription": "v1.4.2: Virtual Joystick, UI Polish, Autosaves",
-      "downloadURL": "https://github.com/jevonlipsey/pico-ios/releases/download/v1.4.2/pocket8.ipa",
+      "downloadURL": "https://github.com/jevonlipsey/pico-ios/releases/download/v.1.4.2/pocket8.ipa",
       "localizedDescription": "A Native PICO-8 Emulator for iOS.",
       "iconURL": "https://raw.githubusercontent.com/jevonlipsey/pico-ios/main/ios/App/App/Assets.xcassets/AppIcon.appiconset/1024.png",
       "tintColor": "#8e2de2",
