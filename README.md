@@ -2,10 +2,7 @@
 
   <img src="assets/1024.png" alt="App Icon" width="120" />
 
-  <h2>Pocket8</h2>
-
-   <h3> A native PICO-8 emulator for iOS. <h3>
-
+  <h2>Pocket8 • A native PICO-8 emulator for iOS.</h2>
 
   <p>
     <a href="https://github.com/jevonlipsey/pico-ios/releases/latest">
