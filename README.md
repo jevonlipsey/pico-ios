@@ -39,7 +39,7 @@ https://github.com/user-attachments/assets/ec24f92e-d29a-4319-8293-439487d60b35
   <img src="assets/libscroll-new.gif" width="20%" alt="libscroll" />
 </p>
 
-## Under the Hood: A Rant
+## Technical Look
 
 The core engineering challenge was **reconciling the asynchronous nature of mobile file I/O with the synchronous requirements of the Emscripten/WASM virtual file system.**
 
@@ -56,7 +56,7 @@ It’s _not_ a browser wrapper; it’s a custom runtime environment built for na
 ![Capacitor](https://img.shields.io/badge/Capacitor-1199EE?style=for-the-badge&logo=capacitor&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)
 ![iOS](https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=apple&logoColor=white)
-![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+<!---![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)--->
 
 ## Installation
 
@@ -80,29 +80,28 @@ Add the official source to **SideStore** or **AltStore** to get updates automati
 2. Sideload via **AltStore**, **SideStore**, or **Sideloadly**.
 3. Enable **Developer Mode** in iOS Settings (Settings > General > Device Management > Your Name).
 
-### Android (APK)
+<!---### Android (APK)
 
 1. Download `Pocket8-Android.apk` from [Releases](https://github.com/jevonlipsey/pico-ios/releases/latest).
 2. Open the file on your device.
 3. If prompted, allow installation from **Unknown Sources**.
    _(Note: Play Protect may ask for confirmation. Click "More Details" -> "Install Anyway".)_
-
+--->
 ## Project Status
 
 Pocket8 is developed in collaboration with **Zep (Lexaloffle)** to be the official BBS Companion app for PICO-8.
 Apart from the PICO-8 engine itself, Pocket8 is a solo dev project designed to bring the community a beautiful native app for mobile.
 
-Aiming to submit to the App Store as soon as possible!
-
+Currently in the App Store review process now.
+<!---
 - **iOS:** Our primary focus. Licensed as an official companion for browsing the BBS and playing carts natively.
 - **Android:** Experimental Alpha. While we are supporting current testers, please note that an official Lexaloffle Android build is planned for later this year.
-
+--->
 ### Build from Source
 
 ```bash
 npm install && npx cap sync
-npx cap open ios      # for Xcode
-npx cap open android  # for Android Studio
+npx cap open ios
 ```
 
 ## How to Get Games
@@ -131,10 +130,9 @@ Open Pocket8, tap the `+` icon, and select the `.p8.png` file you just saved.
 ## License & Attribution
 
 - **Pocket8 Source Code**: Licensed under [GPL] (c) 2026 Jevon Lipsey.
-- **PICO-8 Engine**: (c) Lexaloffle Games. The engine runtime used for the iOS build is proprietary software and will **not** be included in this repository.
-
+- **PICO-8 Engine**: (c) Lexaloffle Games. The engine runtime used for the iOS build and it's information can be found on the Lexaloffle website [here.](https://www.lexaloffle.com/pico-8.php?page=p8rt_ios)
 ## Acknowledgements
 
 - Zep ([Lexaloffle](https://www.lexaloffle.com/)): For creating the fantasy console and being awesome in general. PICO-8 is a masterpiece of design constraints, I'm so excited to bring it to mobile!
 
-- You: For actually reading the documentation. Thanks for the support (:
+- You: For actually reading the docs. Thanks for the support (:
