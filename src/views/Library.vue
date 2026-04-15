@@ -1264,7 +1264,34 @@ onMounted(async () => {
 
 function triggerImport() {
   haptics.impact(ImpactStyle.Light).catch(() => {});
-  fileInput.value.click();
+  
+  if (Capacitor.isNativePlatform()) {
+    FilePicker.pickFiles({
+      multiple: true,
+      readData: true,
+    }).then(result => {
+      if (!result.files || result.files.length === 0) return;
+      
+      const files = result.files.map((f) => {
+        const byteCharacters = atob(f.data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray]);
+        return new File([blob], f.name);
+      });
+      
+      handleFileImport({ target: { files: files, value: '' } });
+    }).catch(e => {
+      if (e.message && !e.message.includes("canceled") && !e.message.includes("cancelled")) {
+        console.error(e);
+      }
+    });
+  } else {
+    fileInput.value.click();
+  }
 }
 
 function openOfficialBBS() {
