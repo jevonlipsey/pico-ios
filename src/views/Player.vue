@@ -545,6 +545,11 @@ async function exitGame() {
   isExiting.value = true;
   picoBridge.shutdown();
 
+  // track completed game session for App Store review prompt
+  const playCount = parseInt(localStorage.getItem('pico_play_count') || '0') + 1;
+  localStorage.setItem('pico_play_count', playCount.toString());
+  localStorage.setItem('pico_returned_from_game', 'true');
+
   // hard navigation to root (clears wasm memory)
   setTimeout(() => {
     // force a reload by stripping all query params and hash

@@ -799,7 +799,7 @@
     <!-- versions footer -->
     <div class="mt-12 mb-6 text-center opacity-30">
       <p class="text-[10px] font-mono uppercase tracking-widest">
-        Pocket8 v1.6.2
+        Pocket8 v1.6.3
       </p>
     </div>
   </div>
@@ -824,12 +824,15 @@ import { Share } from "@capacitor/share";
 import { haptics } from "../utils/haptics";
 import { ImpactStyle } from "@capacitor/haptics";
 import { libraryManager } from "../services/LibraryManager";
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { useFocusable } from "../composables/useFocusable";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { inputManager } from "../services/InputManager";
 import { ScopedStorage } from "@daniele-rolli/capacitor-scoped-storage";
 import { Browser } from "@capacitor/browser";
+
+// native App Store review plugin
+const Review = registerPlugin("Review");
 
 const router = useRouter();
 const route = useRoute();
@@ -1260,35 +1263,64 @@ onMounted(async () => {
   } catch (e) {
     console.error("[library] load failed:", e);
   }
+
+  // App Store review prompt: 2nd return
+  if (Capacitor.getPlatform() === "ios") {
+    const returnedFromGame = localStorage.getItem("pico_returned_from_game");
+    if (returnedFromGame === "true") {
+      localStorage.removeItem("pico_returned_from_game");
+      const playCount = parseInt(
+        localStorage.getItem("pico_play_count") || "0",
+      );
+      console.log(`[library] play count: ${playCount}`);
+      if (playCount === 2) {
+        // delay to ensure the window scene is fully active
+        setTimeout(async () => {
+          console.log("[library] triggering App Store review prompt");
+          try {
+            await Review.requestReview();
+          } catch (e) {
+            console.warn("[library] review prompt failed:", e);
+          }
+        }, 3000);
+      }
+    }
+  }
 });
 
 function triggerImport() {
   haptics.impact(ImpactStyle.Light).catch(() => {});
-  
+
   if (Capacitor.isNativePlatform()) {
     FilePicker.pickFiles({
       multiple: true,
       readData: true,
-    }).then(result => {
-      if (!result.files || result.files.length === 0) return;
-      
-      const files = result.files.map((f) => {
-        const byteCharacters = atob(f.data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+    })
+      .then((result) => {
+        if (!result.files || result.files.length === 0) return;
+
+        const files = result.files.map((f) => {
+          const byteCharacters = atob(f.data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray]);
+          return new File([blob], f.name);
+        });
+
+        handleFileImport({ target: { files: files, value: "" } });
+      })
+      .catch((e) => {
+        if (
+          e.message &&
+          !e.message.includes("canceled") &&
+          !e.message.includes("cancelled")
+        ) {
+          console.error(e);
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray]);
-        return new File([blob], f.name);
       });
-      
-      handleFileImport({ target: { files: files, value: '' } });
-    }).catch(e => {
-      if (e.message && !e.message.includes("canceled") && !e.message.includes("cancelled")) {
-        console.error(e);
-      }
-    });
   } else {
     fileInput.value.click();
   }

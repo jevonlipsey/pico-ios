@@ -5,10 +5,21 @@ import Capacitor
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    private var pluginRegistered = false
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool { 
+        DispatchQueue.main.async { [weak self] in
+            self?.registerLocalPlugins()
+        }
         return true
+    }
+
+    private func registerLocalPlugins() {
+        guard !pluginRegistered,
+              let vc = window?.rootViewController as? CAPBridgeViewController
+        else { return }
+        vc.bridge?.registerPluginInstance(ReviewPlugin())
+        pluginRegistered = true
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

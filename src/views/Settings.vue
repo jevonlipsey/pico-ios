@@ -128,7 +128,7 @@
       <!-- app info -->
       <section class="pt-8 flex flex-col items-center opacity-30">
         <p class="text-[10px] font-mono uppercase tracking-widest">
-          Pocket8 v1.6.2
+          Pocket8 v1.6.3
         </p>
       </section>
     </div>
@@ -152,6 +152,7 @@ import { useToast } from "../composables/useToast";
 import { Dialog } from "@capacitor/dialog";
 
 const Permission = registerPlugin("Permission");
+const Review = registerPlugin("Review");
 
 const router = useRouter();
 const { showToast } = useToast();
@@ -241,6 +242,24 @@ const settingsItems = computed(() => {
     type: "link",
     action: goToKeymap,
   });
+
+  if (Capacitor.getPlatform() === "ios") {
+    items.push({
+      id: "review",
+      label: "Review Pocket8",
+      subtext: "Rate us on the App Store",
+      type: "link",
+      action: async () => {
+        haptics.impact(ImpactStyle.Light).catch(() => {});
+        try {
+          await Review.requestReview();
+        } catch (e) {
+          console.warn("[settings] review prompt failed:", e);
+        }
+      },
+    });
+  }
+
   return items;
 });
 
